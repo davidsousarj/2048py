@@ -95,6 +95,10 @@ def moveright(pi,pj,T):
 	return T
 
 def randomfill(TABLE):
+	# search for zero in the game table
+	flatTABLE = sum(TABLE,[])
+	if 0 not in flatTABLE:
+		return TABLE
 	empty=False
 	w=0
 	while not empty:
