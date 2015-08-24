@@ -8,7 +8,7 @@
 # Aug 24 - fixed colors /fonts
 # BUG: game ending not working
 # BUG: when a play is not possible it keeps adding a random tile
-#
+# TODO: include score, button undo and new game
 import os
 import sys
 import pygame
@@ -190,7 +190,7 @@ dictcolor2={
 pygame.init()
 screen = pygame.display.set_mode((width,height))
 pygame.display.set_caption( 'Python 2048 by DavidSousaRJ' )
-myfont = pygame.font.SysFont("Arial", 30)
+myfont = pygame.font.SysFont("Arial", 30, bold=True)
 
 def gameover(STATUS):
 	if STATUS == 1:
