@@ -1,8 +1,14 @@
-# 2048.py 
+# 2048.py
 # Aug 22, 2015
 # Written in python / pygame by DavidSousaRJ - david.sousarj@gmail.com
 # License: Creative Commons
 # Sorry about some comments in portuguese!
+#
+# Apr 4, 2017 - n2o.matt@gmail.com
+# Make changes in how the move is implemented, since the original game
+# forces the player to chose another direction if no moves is possible
+# in the 'choosen' direction. The previous implementation was not handling
+# this and instead spawning another block.
 #
 # CHANGES:
 # Aug 24 - fixed colors /fonts
@@ -12,131 +18,133 @@
 import os
 import sys
 import pygame
+import pdb;
+import copy;
 from pygame.locals import *
 from random import randint
 
 TABLE=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
 def isgameover(TABLE):
-	status=0
-	zerocount=0
-	for LINE in TABLE:
-		if 2048 in LINE:
-			status=1
-			return status
-		elif 0 not in LINE:
-			zerocount+=1
-	if zerocount==4:
-		#condicoes de gameover: nao ter zero e nao ter consecutivo igual
-		#procura consecutivos horizontal
-		for i in range(4):
-			for j in range(3):
-				if TABLE[i][j]==TABLE[i][j+1]: return status
-		#procura consecutivos na vertical
-		for j in range(4):
-			for i in range(3):
-				if TABLE[i][j]==TABLE[i+1][j]: return status
-		status=2
-	return status
+    status=0
+    zerocount=0
+    for LINE in TABLE:
+        if 2048 in LINE:
+            status=1
+            return status
+        elif 0 not in LINE:
+            zerocount+=1
+    if zerocount==4:
+        #condicoes de gameover: nao ter zero e nao ter consecutivo igual
+        #procura consecutivos horizontal
+        for i in range(4):
+            for j in range(3):
+                if TABLE[i][j]==TABLE[i][j+1]: return status
+        #procura consecutivos na vertical
+        for j in range(4):
+            for i in range(3):
+                if TABLE[i][j]==TABLE[i+1][j]: return status
+        status=2
+    return status
 
 #regras do 2048
 # define a direcaoo jogada, p.ex. : cima
 # para cada coluna, de cima pra baixo
-#	   move o numero para o zero-consecutivo-mais-longe 
-#	   se o nao-zero-mais-perto e igual ao numero, combina
+#      move o numero para o zero-consecutivo-mais-longe
+#      se o nao-zero-mais-perto e igual ao numero, combina
 
 def moveup(pi,pj,T):
-	justcomb=False
-	while pi > 0 and (T[pi-1][pj] == 0 or (T[pi-1][pj] == T[pi][pj] and not justcomb)):
-		if T[pi-1][pj] == 0:
-			T[pi-1][pj] = T[pi][pj]
-			T[pi][pj]=0
-			pi-=1
-		elif T[pi-1][pj]==T[pi][pj]:
-			T[pi-1][pj] += T[pi][pj]
-			T[pi][pj] = 0
-			pi-=1
-			justcomb=True
-	return T
+    justcomb=False
+    while pi > 0 and (T[pi-1][pj] == 0 or (T[pi-1][pj] == T[pi][pj] and not justcomb)):
+        if T[pi-1][pj] == 0:
+            T[pi-1][pj] = T[pi][pj]
+            T[pi][pj]=0
+            pi-=1
+        elif T[pi-1][pj]==T[pi][pj]:
+            T[pi-1][pj] += T[pi][pj]
+            T[pi][pj] = 0
+            pi-=1
+            justcomb=True
+    return T
 
 def movedown(pi,pj,T):
-	justcomb=False
-	while pi < 3 and (T[pi+1][pj] == 0 or (T[pi+1][pj] == T[pi][pj] and not justcomb)):
-		if T[pi+1][pj] == 0:
-			T[pi+1][pj] = T[pi][pj]
-			T[pi][pj]=0
-			pi+=1
-		elif T[pi+1][pj]==T[pi][pj]:
-			T[pi+1][pj] += T[pi][pj]
-			T[pi][pj] = 0
-			pi+=1
-			justcomb=True
-	return T
+    justcomb=False
+    while pi < 3 and (T[pi+1][pj] == 0 or (T[pi+1][pj] == T[pi][pj] and not justcomb)):
+        if T[pi+1][pj] == 0:
+            T[pi+1][pj] = T[pi][pj]
+            T[pi][pj]=0
+            pi+=1
+        elif T[pi+1][pj]==T[pi][pj]:
+            T[pi+1][pj] += T[pi][pj]
+            T[pi][pj] = 0
+            pi+=1
+            justcomb=True
+    return T
 
 def moveleft(pi,pj,T):
-	justcomb=False
-	while pj > 0 and (T[pi][pj-1] == 0 or (T[pi][pj-1] == T[pi][pj] and not justcomb)):
-		if T[pi][pj-1] == 0:
-			T[pi][pj-1] = T[pi][pj]
-			T[pi][pj]=0
-			pj-=1
-		elif T[pi][pj-1]==T[pi][pj]:
-			T[pi][pj-1] += T[pi][pj]
-			T[pi][pj] = 0
-			pj-=1
-			justcomb=True
-	return T
+    justcomb=False
+    while pj > 0 and (T[pi][pj-1] == 0 or (T[pi][pj-1] == T[pi][pj] and not justcomb)):
+        if T[pi][pj-1] == 0:
+            T[pi][pj-1] = T[pi][pj]
+            T[pi][pj]=0
+            pj-=1
+        elif T[pi][pj-1]==T[pi][pj]:
+            T[pi][pj-1] += T[pi][pj]
+            T[pi][pj] = 0
+            pj-=1
+            justcomb=True
+    return T
 
 def moveright(pi,pj,T):
-	justcomb=False
-	while pj < 3 and (T[pi][pj+1] == 0 or (T[pi][pj+1] == T[pi][pj] and not justcomb)):
-		if T[pi][pj+1] == 0:
-			T[pi][pj+1] = T[pi][pj]
-			T[pi][pj]=0
-			pj+=1
-		elif T[pi][pj+1]==T[pi][pj]:
-			T[pi][pj+1] += T[pi][pj]
-			T[pi][pj] = 0
-			pj+=1
-			justcomb=True
-	return T
+    justcomb=False
+    while pj < 3 and (T[pi][pj+1] == 0 or (T[pi][pj+1] == T[pi][pj] and not justcomb)):
+        if T[pi][pj+1] == 0:
+            T[pi][pj+1] = T[pi][pj]
+            T[pi][pj]=0
+            pj+=1
+        elif T[pi][pj+1]==T[pi][pj]:
+            T[pi][pj+1] += T[pi][pj]
+            T[pi][pj] = 0
+            pj+=1
+            justcomb=True
+    return T
 
 def randomfill(TABLE):
-	# search for zero in the game table
-	flatTABLE = sum(TABLE,[])
-	if 0 not in flatTABLE:
-		return TABLE
-	empty=False
-	w=0
-	while not empty:
-		w=randint(0,15)
-		if TABLE[w//4][w%4] == 0:
-			empty=True
-	z=randint(1,5)
-	if z==5:
-		TABLE[w//4][w%4] = 4
-	else:
-		TABLE[w//4][w%4] = 2
-	return TABLE
+    # search for zero in the game table
+    flatTABLE = sum(TABLE,[])
+    if 0 not in flatTABLE:
+        return TABLE
+    empty=False
+    w=0
+    while not empty:
+        w=randint(0,15)
+        if TABLE[w//4][w%4] == 0:
+            empty=True
+    z=randint(1,5)
+    if z==5:
+        TABLE[w//4][w%4] = 4
+    else:
+        TABLE[w//4][w%4] = 2
+    return TABLE
 
 def key(DIRECTION,TABLE):
-	if   DIRECTION =='w':
-		for pi in range(1,4):
-			for pj in range(4):
-				if TABLE[pi][pj] !=0: TABLE=moveup(pi,pj,TABLE)
-	elif DIRECTION =='s':
-		for pi in range(2,-1,-1):
-			for pj in range(4):
-				if TABLE[pi][pj] !=0: TABLE=movedown(pi,pj,TABLE)
-	elif DIRECTION =='a':
-		for pj in range(1,4):
-			for pi in range(4):
-				if TABLE[pi][pj] !=0: TABLE=moveleft(pi,pj,TABLE)
-	elif DIRECTION =='d':
-		for pj in range(2,-1,-1):
-			for pi in range(4):
-				if TABLE[pi][pj] !=0: TABLE=moveright(pi,pj,TABLE)
-	return TABLE
+    if   DIRECTION =='w':
+        for pi in range(1,4):
+            for pj in range(4):
+                if TABLE[pi][pj] !=0: TABLE=moveup(pi,pj,TABLE)
+    elif DIRECTION =='s':
+        for pi in range(2,-1,-1):
+            for pj in range(4):
+                if TABLE[pi][pj] !=0: TABLE=movedown(pi,pj,TABLE)
+    elif DIRECTION =='a':
+        for pj in range(1,4):
+            for pi in range(4):
+                if TABLE[pi][pj] !=0: TABLE=moveleft(pi,pj,TABLE)
+    elif DIRECTION =='d':
+        for pj in range(2,-1,-1):
+            for pi in range(4):
+                if TABLE[pi][pj] !=0: TABLE=moveright(pi,pj,TABLE)
+    return TABLE
 
 def showtext(TABLE):
     os.system('clear')
@@ -193,27 +201,27 @@ pygame.display.set_caption( 'Python 2048 by DavidSousaRJ' )
 myfont = pygame.font.SysFont("Arial", 30, bold=True)
 
 def gameover(STATUS):
-	if STATUS == 1:
-		label = myfont.render("You win! :)", 1, (255,255,255))
-		screen.blit(label, (100, 100))
-	elif STATUS == 2:
-		label = myfont.render("Game over! :(", 1, (255,255,255))
-		screen.blit(label, (100, 100))
-	pygame.display.update()
+    if STATUS == 1:
+        label = myfont.render("You win! :)", 1, (255,255,255))
+        screen.blit(label, (100, 100))
+    elif STATUS == 2:
+        label = myfont.render("Game over! :(", 1, (255,255,255))
+        screen.blit(label, (100, 100))
+    pygame.display.update()
 
 def show(TABLE):
-	screen.fill(colorback)
-	for i in range(4):
-		for j in range(4):
-			pygame.draw.rect(screen, dictcolor1[TABLE[i][j]], (j*boxsize+margin,
-											  i*boxsize+margin,
-											  boxsize-2*margin,
-											  boxsize-2*margin),
-											  thickness)
-			if TABLE[i][j] != 0:
-				label = myfont.render("%4s" %(TABLE[i][j]), 1, dictcolor2[TABLE[i][j]] )
-				screen.blit(label, (j*boxsize+4*margin, i*boxsize+5*margin))
-	pygame.display.update()
+    screen.fill(colorback)
+    for i in range(4):
+        for j in range(4):
+            pygame.draw.rect(screen, dictcolor1[TABLE[i][j]], (j*boxsize+margin,
+                                              i*boxsize+margin,
+                                              boxsize-2*margin,
+                                              boxsize-2*margin),
+                                              thickness)
+            if TABLE[i][j] != 0:
+                label = myfont.render("%4s" %(TABLE[i][j]), 1, dictcolor2[TABLE[i][j]] )
+                screen.blit(label, (j*boxsize+4*margin, i*boxsize+5*margin))
+    pygame.display.update()
 
 
 #paintCanvas
@@ -224,46 +232,41 @@ showtext(TABLE)
 running=True
 
 while True:
-	for event in pygame.event.get():
-		if event.type == QUIT:
-			print "quit"
-			pygame.quit(); sys.exit()
-		if event.type == pygame.KEYDOWN:
-			if running:
-				if event.key == pygame.K_UP:
-					TABLE=key('w',TABLE)
-					TABLE=randomfill(TABLE)
-					show(TABLE)
-					showtext(TABLE)
-					STATUS=isgameover(TABLE)
-					if STATUS<0:
-						running=False
-						gameover(STATUS)
-				if event.key == pygame.K_DOWN:
-					TABLE=key('s',TABLE)
-					TABLE=randomfill(TABLE)
-					show(TABLE)
-					showtext(TABLE)
-					STATUS=isgameover(TABLE)
-					if STATUS<0:
-						running=False
-						gameover(STATUS)
-				if event.key == pygame.K_LEFT:
-					TABLE=key('a',TABLE)
-					TABLE=randomfill(TABLE)
-					show(TABLE)
-					showtext(TABLE)
-					STATUS=isgameover(TABLE)
-					if STATUS<0:
-						running=False
-						gameover(STATUS)
-				if event.key == pygame.K_RIGHT:
-					TABLE=key('d',TABLE)
-					TABLE=randomfill(TABLE)
-					show(TABLE)
-					showtext(TABLE)
-					STATUS=isgameover(TABLE)
-					if STATUS<0:
-						running=False
-						gameover(STATUS)
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            print "quit"
+            pygame.quit(); sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if running:
+                desired_key = None
+                if event.key == pygame.K_UP    : desired_key = "w"
+                if event.key == pygame.K_DOWN  : desired_key = "s"
+                if event.key == pygame.K_LEFT  : desired_key = "a"
+                if event.key == pygame.K_RIGHT : desired_key = "d"
+
+                ## Player didn't selected any direction key.
+                if desired_key is None:
+                    continue
+
+                ## We're passing a deep copy of TABLE to key() function
+                ## since python will pass a "reference" to the object.
+                ## So all modifications inside the key() function will
+                ## modify the TABLE object and we need compare it to the
+                ## previous state of the TABLE to check if the direction
+                ## choosen by player was a valid one.
+                ##
+                ## It means that if no movement or merge was possible with
+                ## that direction, player must choose another direction.
+                ## Only then we spawn another block.
+                new_table = key(desired_key, copy.deepcopy(TABLE))
+                if new_table != TABLE:
+                    TABLE=randomfill(new_table)
+                    show(TABLE)
+                    showtext(TABLE)
+                    STATUS=isgameover(TABLE)
+
+                    if STATUS<0:
+                        running=False
+                        gameover(STATUS)
+
 #end
